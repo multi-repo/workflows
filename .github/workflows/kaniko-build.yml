@@ -1,0 +1,51 @@
+name: Build image with kaniko
+
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        description: "The owner of the repository (organization or user)"
+        required: true
+        type: string
+    secrets:
+        personal_access_token:
+            required: true
+            
+jobs:
+        
+    ghcr-build:
+        runs-on: ubuntu-latest
+        container:
+          image: gcr.io/kaniko-project/executor:v1.23.0-debug  
+          options: --entrypoint /bin/sh
+    
+        steps:
+    
+          - name: Set branch name as environment variable
+            run: echo "BRANCH_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
+    
+          - name: Set up Docker config for Kaniko
+            run: |
+              cat <<EOF > /kaniko/.docker/config.json
+              {
+                "auths": {
+                  "ghcr.io": {
+                    "auth": "$(echo -n "$GIT_USERNAME:$GIT_PASSWORD" | base64 -w0)"
+                  }
+                }
+              }
+              EOF
+            env:
+              GIT_USERNAME: ${{ github.actor }} 
+              GIT_PASSWORD: ${{ secrets.personal_access_token }}
+        
+    
+          - name: Build and push nestjs-app
+            run: |
+              /kaniko/executor --dockerfile="./Dockerfile" \
+                --context="${{ github.repositoryUrl }}#${{ github.ref_name }}#${{ github.sha }}"  \
+                --destination="$GH_REGISTRY/$IMAGE_NAME:$GITHUB_REF_NAME" \
+            env:
+              GH_REGISTRY: "ghcr.io"
+              IMAGE_NAME: ${{ inputs.image-name }}
+        
