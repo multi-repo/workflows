@@ -5,8 +5,9 @@ on:
     inputs:
       owner:
         description: "The owner of the repository (organization or user)"
-        required: true
+        required: false
         type: string
+        default: ${{ github.repository_owner }}
       repository:
         description: "The name of the repository where cleanup will happen"
         required: true
@@ -38,7 +39,7 @@ jobs:
         uses: dataaxiom/ghcr-cleanup-action@v1 
         with:
           token: ${{ secrets.personal_access_token }}
-          owner: ${{ inputs.owner }}
+          owner: ${{ github.repository_owner }}
           repository: ${{ inputs.repository }}
           keep-n-tagged: ${{ inputs.keep_n_tagged }}
           package: ${{ inputs.package }}
