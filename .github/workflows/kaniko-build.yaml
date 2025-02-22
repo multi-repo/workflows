@@ -40,12 +40,12 @@ jobs:
               GIT_PASSWORD: ${{ secrets.personal_access_token }}
         
     
-          - name: Build and push nestjs-app
+          - name: Build and push
             run: |
+              echo "Building and pushing image: $IMAGE_NAME"
               /kaniko/executor --dockerfile="./Dockerfile" \
                 --context="${{ github.repositoryUrl }}#${{ github.ref_name }}#${{ github.sha }}"  \
                 --destination="$GH_REGISTRY/$IMAGE_NAME:$GITHUB_REF_NAME" \
             env:
               GH_REGISTRY: "ghcr.io"
               IMAGE_NAME: ${{ inputs.image-name }}
-        
